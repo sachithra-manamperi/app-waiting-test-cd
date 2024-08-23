@@ -4,6 +4,71 @@ on:
   workflow_dispatch:
 
 jobs:
+
+  request-approval:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Read DEV Version from versions.txt
+        run: |
+          cd main
+          VERSION=$(grep -oP 'UAT: \Kv[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' versions.txt)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "$VERSION"
+
+      - name: Set workflow URL as environment variable
+        run: |
+          echo "WORKFLOW_URL=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
+
+      - name: Request Approval from Microsoft Teams when Success
+        run: |
+          curl -H 'Content-Type: application/json' \
+          -d "{
+                \"type\": \"message\",
+                \"attachments\": [
+                  {
+                    \"contentType\": \"application/vnd.microsoft.card.adaptive\",
+                    \"content\": {
+                      \"\$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\",
+                      \"type\": \"AdaptiveCard\",
+                      \"version\": \"1.2\",
+                      \"body\": [
+                        {
+                          \"type\": \"TextBlock\",
+                          \"size\": \"Medium\",
+                          \"weight\": \"Bolder\",
+                          \"text\": \"UAT Environment All Cypress Tests Passed 🚀\",
+                          \"style\": \"heading\",
+                          \"wrap\": true
+                        },
+                        {
+                          \"type\": \"TextBlock\",
+                          \"text\": \"**Needs Approval to Deploy This Version to The Prod Environment** ✅\",
+                          \"weight\": \"bolder\",
+                          \"size\": \"medium\"
+                        },
+                        {
+                          \"type\": \"TextBlock\",
+                          \"text\": \"**Version:** $VERSION\",
+                          \"wrap\": true
+                        },
+                        {
+                          \"type\": \"TextBlock\",
+                          \"text\": \"[View Workflow]($WORKFLOW_URL)\",
+                          \"wrap\": true
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }" \
+          "${{ secrets.TEAMS_WEBHOOK_URL }}"
+
   prod-deploy:
     runs-on: ubuntu-latest
     environment: production
