@@ -1,0 +1,17 @@
+name: Prod Deployment Workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  prod-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Echo version input
+        run: echo "${{ toJSON(github.event.inputs) }}"
+      - name: Run a multi-line script
+        run: |
+          echo Add other actions to build,
+          echo test, and deploy your project.
