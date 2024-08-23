@@ -69,6 +69,7 @@ jobs:
           "${{ secrets.TEAMS_WEBHOOK_URL }}"
 
   prod-deploy:
+    needs: request-approval
     runs-on: ubuntu-latest
     environment: production
     steps:
