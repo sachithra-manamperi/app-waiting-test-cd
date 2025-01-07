@@ -7,7 +7,7 @@ jobs:
 
   request-approval:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 3
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
